@@ -1,8 +1,11 @@
-from typing import TYPE_CHECKING, Any
-
 from django.contrib import admin
-from .models import CraftingRecipe, CraftingIngredient, CraftingIngredientGroup, CraftingGroupOption
-from django.utils.safestring import mark_safe
+
+from .models import (
+    CraftingGroupOption,
+    CraftingIngredient,
+    CraftingIngredientGroup,
+    CraftingRecipe,
+)
 
 class CraftingIngredientInline(admin.TabularInline):
     model = CraftingIngredient
@@ -26,11 +29,11 @@ class CraftingIngredientGroupInline(admin.StackedInline):
 class CraftingRecipeAdmin(admin.ModelAdmin):
     list_display = ("result",)
     inlines = [CraftingIngredientInline, CraftingIngredientGroupInline]
-    search_fields = ("result__name",)
+    search_fields = ("result__country",)
     autocomplete_fields = ("result",)  
 
 @admin.register(CraftingIngredientGroup)
 class CraftingIngredientGroupAdmin(admin.ModelAdmin):
     list_display = ("name", "required_count", "recipe")
     inlines = [CraftingGroupOptionInline]
-    search_fields = ("ball__name", "group__name") 
+    search_fields = ("name", "recipe__result__country")

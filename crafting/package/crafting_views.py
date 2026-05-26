@@ -1,29 +1,13 @@
 import discord
 import random
-from .models import CraftingRecipe
-from .models import CraftingIngredient
-from .models import CraftingIngredientGroup
-from .models import CraftingGroupOption
 
 from .logic import (
     find_matching_recipes, 
     determine_ingredient_usage,
-    can_craft_recipe
 )
 
 
-from ballsdex.core.models import (
-    Ball,
-    BallInstance,
-    BlacklistedGuild,
-    BlacklistedID,
-    GuildConfig,
-    Player,
-    Trade,
-    TradeObject,
-    balls,
-    specials,
-)
+from bd_models.models import BallInstance, TradeObject
 from ballsdex.settings import settings 
 from .session_manager import crafting_sessions 
 
@@ -142,16 +126,19 @@ class CraftingView(discord.ui.View):
             # Get the actual ball instances to use
             ball_instances_to_delete = []
             for instance_id in ingredients_to_use:
-                instance = await BallInstance.get(id=instance_id)
-                await instance.fetch_related('ball', 'special')
+                instance = await BallInstance.objects.select_related("ball", "special").aget(
+                    pk=instance_id
+                )
                 ball_instances_to_delete.append(instance)
     
-            # Clean up - first remove any lingering trade references, then delete instances
-            instance_ids_to_delete = [ball.id for ball in ball_instances_to_delete]
+            # Clean up - first remove any lingering trade references, then delete instances.
+            instance_ids_to_delete = [ball.pk for ball in ball_instances_to_delete]
     
             try:
                 # Remove any trade object references that might be lingering
-                await TradeObject.filter(ballinstance_id__in=instance_ids_to_delete).delete()
+                await TradeObject.objects.filter(
+                    ballinstance_id__in=instance_ids_to_delete
+                ).adelete()
                 print(f"Cleaned up trade object references for: {instance_ids_to_delete}")
             except Exception as e:
                 print(f"Error cleaning up trade objects: {e}")
@@ -163,15 +150,18 @@ class CraftingView(discord.ui.View):
                 return
     
             try:
-                deleted_count = await BallInstance.filter(id__in=instance_ids_to_delete).delete()    
-                if deleted_count != len(instance_ids_to_delete):
-                    print(f"🚨 Mismatch in deletion count: expected {len(instance_ids_to_delete)} but got {deleted_count}")
+                found_count = await BallInstance.objects.filter(
+                    pk__in=instance_ids_to_delete
+                ).acount()
+                if found_count != len(instance_ids_to_delete):
+                    print(f"Mismatch in deletion count: expected {len(instance_ids_to_delete)} but found {found_count}")
                     del crafting_sessions[interaction.user.id]
                     await interaction.followup.send(
                         "Not all ingredients were properly consumed. Crafting session ended for security.",
                         ephemeral=True
                     )
                     return
+                await BallInstance.objects.filter(pk__in=instance_ids_to_delete).adelete()
     
             except Exception as e:
                 print(f"Error deleting ball instances: {e}")
@@ -183,8 +173,7 @@ class CraftingView(discord.ui.View):
                 return
     
             # Create the new ball
-            await recipe.fetch_related("result")
-            crafted_instance = await BallInstance.create(
+            crafted_instance = await BallInstance.objects.acreate(
                 player=self.player,
                 ball=recipe.result,
                 special=self.session_data.get('special'),
