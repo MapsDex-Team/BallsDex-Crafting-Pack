@@ -1,33 +1,11 @@
 import discord
 from typing import Dict, List, Optional
-import random
 
-from .models import CraftingRecipe
-from .models import CraftingIngredient
-from .models import CraftingIngredientGroup                                            
-from .models import CraftingGroupOption
+from bd_models.models import BallInstance
 
-from ballsdex.settings import settings                                       
-from ballsdex.core.utils.transformers import BallEnabledTransform, BallTransform        
-from ballsdex.core.utils.transformers import SpecialEnabledTransform
-from ballsdex.settings import settings                  
-                                
-from ballsdex.core.models import (
-    Ball,
-    BallInstance,
-    BlacklistedGuild,
-    BlacklistedID,
-    GuildConfig,
-    Player,
-    Trade,
-    TradeObject,                                                                            
-    balls,
-    specials,
-)
 from .logic import (
     find_matching_recipes,
-    determine_ingredient_usage,
-    can_craft_recipe
+    queryset_to_list,
 )
 
 from .crafting_views import CraftingView 
@@ -42,9 +20,11 @@ async def update_crafting_display(interaction, user_id, is_new=False):
     ball_instances = []
     if session['ingredient_instances']:
         try:
-            ball_instances = await BallInstance.filter(
-                id__in=session['ingredient_instances']
-            ).prefetch_related('ball', 'special').all()
+            ball_instances = await queryset_to_list(
+                BallInstance.objects.select_related("ball", "special").filter(
+                    pk__in=session['ingredient_instances']
+                )
+            )
         except Exception as e:
             print(f"Error fetching ball instances: {e}")
             return

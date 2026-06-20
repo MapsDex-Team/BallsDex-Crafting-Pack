@@ -1,66 +1,60 @@
-from __future__ import annotations
+from django.db import models
 
-from datetime import datetime, timedelta
-from enum import IntEnum
-from io import BytesIO
-from typing import TYPE_CHECKING, Iterable, Tuple, Type
-
-import discord
-from discord.utils import format_dt
-from tortoise import exceptions, fields, models, signals, timezone, validators
-from tortoise.contrib.postgres.indexes import PostgreSQLIndex
-from tortoise.expressions import Q
-
-from ballsdex.core.image_generator.image_gen import draw_card
-from ballsdex.settings import settings
-
-if TYPE_CHECKING:
-    from tortoise.backends.base.client import BaseDBAsyncClient
-
+from bd_models.models import Ball
 
 class CraftingRecipe(models.Model):
-    id = fields.IntField(pk=True)
-    result = fields.ForeignKeyField("models.Ball", related_name="crafted_by")
+    result = models.ForeignKey(Ball, on_delete=models.CASCADE, related_name="crafted_by")
 
     class Meta:
-        table = "craftingrecipe"
+        db_table = "craftingrecipe"
 
-    def __str__(self) -> str:
-        return str(self.pk)
+    def __str__(self):
+        if self.result:
+            return f"{self.result} Recipe"
+        return "Unnamed Crafting Recipe"
+
 
 class CraftingIngredient(models.Model):
-    id = fields.IntField(pk=True)
-    recipe = fields.ForeignKeyField("models.CraftingRecipe", related_name="ingredients")
-    ingredient = fields.ForeignKeyField("models.Ball", null=True, related_name="+")  
-    quantity = fields.IntField(default=1)
+    recipe = models.ForeignKey("CraftingRecipe", on_delete=models.CASCADE, related_name="ingredients")
+    ingredient = models.ForeignKey(
+        Ball,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    quantity = models.PositiveIntegerField(default=1)
 
     class Meta:
-        table = "craftingingredient"
-        unique_together = ("recipe", "ingredient")  
-        
-    def __str__(self) -> str:
-        return str(self.pk)
-        
+        db_table = "craftingingredient"
+        constraints = [
+            models.UniqueConstraint(fields=("recipe", "ingredient"), name="unique_recipe_ingredient")
+        ]
+
+    def __str__(self):
+        return f"{self.ingredient} x{self.quantity}"
+
 class CraftingIngredientGroup(models.Model):
-    id = fields.IntField(pk=True)
-    recipe = fields.ForeignKeyField("models.CraftingRecipe", related_name="ingredient_groups")
-    name = fields.CharField(max_length=100)  # e.g., "European Countries"
-    required_count = fields.IntField(default=1)  # How many from this group needed
+    recipe = models.ForeignKey("CraftingRecipe", on_delete=models.CASCADE, related_name="ingredient_groups")
+    name = models.CharField(max_length=100)
+    required_count = models.PositiveIntegerField(default=1)
 
     class Meta:
-        table = "craftingingredientgroup"
+        db_table = "craftingingredientgroup"
 
-    def __str__(self) -> str:
-        return f"{self.name} (choose {self.required_count})"
+    def __str__(self):
+        return f"{self.name} (need {self.required_count})"
+
 
 class CraftingGroupOption(models.Model):
-    id = fields.IntField(pk=True)
-    group = fields.ForeignKeyField("models.CraftingIngredientGroup", related_name="options")
-    ball = fields.ForeignKeyField("models.Ball", related_name="group_memberships")
+    group = models.ForeignKey("CraftingIngredientGroup", on_delete=models.CASCADE, related_name="options")
+    ball = models.ForeignKey(Ball, on_delete=models.CASCADE, related_name="group_memberships")
 
     class Meta:
-        table = "craftinggroupoption"
-        unique_together = ("group", "ball")
+        db_table = "craftinggroupoption"
+        constraints = [
+            models.UniqueConstraint(fields=("group", "ball"), name="unique_group_ball")
+        ]
 
-    def __str__(self) -> str:
-        return f"{self.ball} in {self.group.name}" if hasattr(self, 'ball') and hasattr(self, 'group') else str(self.pk)
+    def __str__(self):
+        return f"{self.ball} in {self.group.name}"

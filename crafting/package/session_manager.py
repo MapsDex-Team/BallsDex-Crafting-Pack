@@ -5,7 +5,7 @@ import datetime
 import traceback
 import threading
 
-from ballsdex.core.models import Player, Ball
+from bd_models.models import Ball, Player
 
 class CraftingSessionData:
     def __init__(self, player: Player, ingredient_instances: List[int], special=None):
