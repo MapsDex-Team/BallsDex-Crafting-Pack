@@ -24,7 +24,7 @@ Add the following configuration:
 
 ```toml
 [[ballsdex.packages]]
-location = "git+https://github.com/Mitoooooooopo/Crafting-package-BD.git@0.3.1#master"
+location = "git+https://github.com/MapsDex-Team/BallsDex-Crafting-Pack.git@0.3.1#master"
 path = "crafting"
 enabled = true
 ```
@@ -40,7 +40,7 @@ enabled = true
 
 # Crafting Package
 [[ballsdex.packages]]
-location = "git+https://github.com/Mitoooooooopo/Crafting-package-BD.git@0.3.1#master"
+location = "git+https://github.com/MapsDex-Team/BallsDex-Crafting-Pack.git@0.3.1#master"
 path = "crafting"
 enabled = true
 ```
