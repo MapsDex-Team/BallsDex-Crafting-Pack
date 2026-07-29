@@ -2,6 +2,8 @@
 
 Crafting system for **BallsDex V3**.
 
+Note: currently I'm not recommending anyone to use this package anymore this version currently is filled with some bugs there is a more newer version in devlopment that is a complete rewrite of this package with cleaner code and less boilerplate, more features and focused 
+
 ## Commands
 
 | Command | Description |
