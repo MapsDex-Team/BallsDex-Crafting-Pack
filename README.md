@@ -1,8 +1,7 @@
-# BallsDex V3 Crafting Package
+# BallsDex Crafting Package
 
-Crafting system for **BallsDex V3**.
-
-Note: currently I'm not recommending anyone to use this package anymore this version currently is filled with some bugs there is a more newer version in devlopment that is a complete rewrite of this package with cleaner code and less boilerplate, more features and focused 
+> [!NOTE]
+> I don't recommend using this package, this version is filled with bugs. a new version is currently in development which will be a complete rewrite of this package with cleaner code, less boilerplate and more features.
 
 ## Commands
 
@@ -26,7 +25,7 @@ Add the following configuration:
 
 ```toml
 [[ballsdex.packages]]
-location = "git+https://github.com/Mitoooooooopo/Crafting-package-BD.git"
+location = "git+https://github.com/Mitoooooooopo/Crafting-package-BD.git@0.3.1#main"
 path = "crafting"
 enabled = true
 ```
@@ -42,7 +41,7 @@ enabled = true
 
 # Crafting Package
 [[ballsdex.packages]]
-location = "git+https://github.com/Mitoooooooopo/Crafting-package-BD.git"
+location = "git+https://github.com/Mitoooooooopo/Crafting-package-BD.git@0.3.1#main"
 path = "crafting"
 enabled = true
 ```
@@ -94,14 +93,4 @@ After changing commands or installing the package, reload and sync:
 @YourBot reloadtree
 ```
 
-This updates the command list in Discord within seconds. Admin panel display changes may require restarting the admin panel container.
-
-## Crafting Result
-
-When a craft succeeds, the bot edits the crafting message with the crafted result:
-
-```text
-Successfully crafted United States of America (ID: #1A2B)!
-```
-
-The success embed also lists the ingredients used, the new instance stats, total sacrificed stats, and net stat change.
+This updates the commands in Discord. Admin panel display changes may require restarting the admin panel container.

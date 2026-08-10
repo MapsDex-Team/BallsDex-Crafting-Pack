@@ -237,7 +237,7 @@ class Craft(commands.GroupCog, group_name="craft"):
                 desc.append(f"{emoji} {ing.ingredient.country} x{ing.quantity}")
 
             for group in groups:
-                options = await queryset_to_list(group.options.select_related("ball").all()[:5])
+                options = await queryset_to_list(group.options.select_related("ball").all())
                 option_text = [
                     f"{interaction.client.get_emoji(option.ball.emoji_id)} {option.ball.country}"
                     for option in options
