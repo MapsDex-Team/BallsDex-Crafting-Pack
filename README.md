@@ -13,6 +13,7 @@ Note: currently I'm not recommending anyone to use this package anymore this ver
 | `/craft remove` | Remove one countryball instance from the active crafting session. |
 | `/craft clear` | Clear all added ingredients from the active crafting session. |
 | `/craft recipes` | Show configured recipes, optionally filtered by result countryball. |
+| `/craft elemental` | Consume Fire, Earth, Water, and Electric specials of the selected countryball to create an Elemental special. |
 
 ## Installation
 
@@ -84,6 +85,15 @@ Under **Crafting → Crafting recipes** you can see every recipe, including:
 - **Group options** — countryballs accepted by a group
 
 Recipes and groups are created manually in the admin panel.
+
+## Elemental Crafting
+
+`/craft elemental` automatically finds one non-favorited, unlocked Fire, Earth, Water, and Electric special for the selected countryball in the user's inventory. If all four are available, the command consumes them and gives the user a new Elemental special of the same countryball.
+
+Set the hardcoded IDs in `crafting/package/cog.py` before the event starts:
+
+- `ELEMENTAL_INGREDIENT_SPECIAL_IDS` for Fire, Earth, Water, and Electric
+- `ELEMENTAL_RESULT_SPECIAL_ID` for Elemental
 
 ## Applying changes without a full restart
 
