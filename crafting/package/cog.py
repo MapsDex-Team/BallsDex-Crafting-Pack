@@ -11,7 +11,7 @@ from ballsdex.core.utils.transformers import (
     BallInstanceTransform,
     SpecialEnabledTransform,
 )
-from ballsdex.settings import settings
+from settings.models import settings
 
 from .logic import queryset_to_list
 from crafting.models import CraftingRecipe
@@ -28,10 +28,15 @@ ELEMENTAL_INGREDIENT_SPECIAL_IDS = {
 }
 ELEMENTAL_RESULT_SPECIAL_ID = 28
 
+RUBY_INGREDIENT_SPECIAL_IDS = {
+    "Shiny": 4,
+}
+
+RUBY_RESULT_SPECIAL_ID = 36
+
 class Craft(commands.GroupCog, group_name="craft"):
     def __init__(self, bot: "BallsDexBot"):
         self.bot = bot
-        self.settings = settings
 
     @app_commands.command()
     async def begin(
@@ -399,6 +404,148 @@ class Craft(commands.GroupCog, group_name="craft"):
 
         await interaction.followup.send(embed=embed)
 
+    @app_commands.command()
+    async def ruby(
+        self,
+        interaction: discord.Interaction,
+        countryball: BallEnabledTransform,
+    ):
+        """
+        Craft a Ruby from 3 shinies of the selected countryball.
+
+        Parameters
+        ----------
+        countryball: Ball
+            The countryball to craft into a ruby.
+        """
+        await interaction.response.defer()
+
+        player, _ = await Player.objects.aget_or_create(
+            discord_id=interaction.user.id
+        )
+
+        configured_ids = [
+            *RUBY_INGREDIENT_SPECIAL_IDS.values(),
+            RUBY_RESULT_SPECIAL_ID,
+        ]
+
+        if any(special_id <= 0 for special_id in configured_ids):
+            return await interaction.followup.send(
+                "❌ Ruby crafting is currently disabled.",
+                ephemeral=True,
+            )
+
+        if len(set(configured_ids)) != len(configured_ids):
+            return await interaction.followup.send(
+                "❌ Ruby crafting is currently disabled.",
+                ephemeral=True,
+            )
+
+        try:
+            ruby_special = await Special.objects.aget(
+                pk=RUBY_RESULT_SPECIAL_ID
+            )
+        except Special.DoesNotExist:
+            return await interaction.followup.send(
+                "❌ Ruby crafting is currently disabled.",
+                ephemeral=True,
+            )
+
+        ingredient_name, ingredient_special_id = next(
+            iter(RUBY_INGREDIENT_SPECIAL_IDS.items())
+        )
+
+        candidates = await queryset_to_list(
+            BallInstance.objects.select_related("ball", "special")
+            .filter(
+                player=player,
+                ball=countryball,
+                special_id=ingredient_special_id,
+                favorite=False,
+            )
+            .order_by("pk")
+        )
+
+        candidates.sort(
+            key=lambda candidate: (
+                candidate.attack_bonus + candidate.health_bonus,
+                candidate.pk,
+            )
+        )
+
+        ingredients = []
+
+        for candidate in candidates:
+            if len(ingredients) >= 3:
+                break
+
+            if await candidate.is_locked(refresh=False):
+                continue
+
+            ingredients.append(candidate)
+
+        missing = 3 - len(ingredients)
+
+        if missing > 0:
+            return await interaction.followup.send(
+                f"❌ You need **3 {ingredient_name} "
+                f"{countryball.country}s** to craft a Ruby. "
+                f"You are missing **{missing}**.",
+                ephemeral=True,
+            )
+
+        try:
+            crafted_instance = await BallInstance.objects.acreate(
+                player=player,
+                ball=countryball,
+                special_id=RUBY_RESULT_SPECIAL_ID,
+                tradeable=False,
+                health_bonus=random.randint(
+                    -settings.max_attack_bonus,
+                    settings.max_attack_bonus,
+                ),
+                attack_bonus=random.randint(
+                    -settings.max_attack_bonus,
+                    settings.max_attack_bonus,
+                ),
+            )
+        except Exception as e:
+            print(f"Unexpected error in Ruby crafting: {e}")
+
+            return await interaction.followup.send(
+                "❌ An unexpected error occurred while creating the Ruby. "
+                "Please try again.",
+                ephemeral=True,
+            )
+
+        ball_emoji = interaction.client.get_emoji(countryball.emoji_id)
+        ruby_prefix = (
+            f"{ruby_special.emoji} "
+            if ruby_special.emoji
+            else ""
+        )
+
+        embed = discord.Embed(
+            title="✅ Ruby Crafting Successful!",
+            description=(
+                f"Successfully created **{ruby_prefix}"
+                f"{ruby_special.name} {ball_emoji} "
+                f"{countryball.country}** "
+                f"(ID: #{crafted_instance.pk:0X})!"
+            ),
+            color=0x00FF00,
+        )
+
+        embed.add_field(
+            name="New instance Stats",
+            value=(
+                f"**ATK:** {crafted_instance.attack_bonus:+d} | "
+                f"**HP:** {crafted_instance.health_bonus:+d}"
+            ),
+            inline=False,
+        )
+
+        await interaction.followup.send(embed=embed)
 
 async def update_crafting_display(interaction, user_id, is_new=False):
     from .crafting_utils import update_crafting_display as _update
