@@ -1,64 +1,96 @@
-# Crafting-package-BD
-A simple system for crafting For those who want a craft command for their Ballsdex instance  
+# BallsDex Crafting Package
 
-> [!IMPORTANT]
-> Any Bugs, errors, or confusion You won't get any support from official Ballsdex server for this package since this is a custom one You need to directly dm me @An Unknown Guy just ping me on any server or dm 
+> [!NOTE]
+> I don't recommend using this package, this version is filled with bugs. a new version is currently in development which will be a complete rewrite of this package with cleaner code, less boilerplate and more features.
 
-> [!Tip]
-> Read howtouse.txt to understand how to use this package 
-> 
-## Installation 
+## Commands
 
-# Step 1 
-Make a folder called `crafting` at your `BallsDex-DiscordBot/ballsdex/packages`
-Copy the `__init__.py` `cog.py` file `models.py` file and `transformer.py` file to the new crafting folder you made 
+| Command | Description |
+|---|---|
+| `/craft begin` | Start a crafting session, optionally locked to a selected special. |
+| `/craft add` | Add one owned countryball instance to the active crafting session. |
+| `/craft remove` | Remove one countryball instance from the active crafting session. |
+| `/craft clear` | Clear all added ingredients from the active crafting session. |
+| `/craft recipes` | Show configured recipes, optionally filtered by result countryball. |
 
-# Step 2 
-Add the package to your config.yml, open your config.yml scroll down until your see 
-`packages` and add it there 
-![IMG_20250506_154729](https://github.com/user-attachments/assets/c035eeaf-642d-4630-a5df-aaca6edb58ea)
+## Installation
 
-# Step 3 
-Open your `__main__.py` and edit the 
-```py
-TORTOISE_ORM = {
-    "connections": {"default": os.environ.get("BALLSDEXBOT_DB_URL")},
-    "apps": {
-        "models": {
-            "models": ["ballsdex.core.models"],
-            "default_connection": "default",
-        },
-    },
-}
+### 1 — Configure extra.toml
+
+**If the file doesn't exist:** Create a new file `extra.toml` in your `config` folder under the BallsDex directory.
+
+**If you already have other packages installed:** Add the following configuration to your existing `extra.toml` file. Each package is defined by a `[[ballsdex.packages]]` section, so you can have multiple packages installed.
+
+Add the following configuration:
+
+```toml
+[[ballsdex.packages]]
+location = "git+https://github.com/Mitoooooooopo/Crafting-package-BD.git@0.3.1#main"
+path = "crafting"
+enabled = true
 ```
 
-To reflect the models in crafting folder ![IMG_20250506_155944](https://github.com/user-attachments/assets/412695ee-d6ca-4f29-bb28-9aa08167b978)
+**Example of multiple packages:**
 
-# Step 4 
-create a folder named `craftings` in your `BallsDex-DiscordBot/admin_panel` and paste every file from the craftings folder on this repository including the migration folder onto your craftings folder.
-![IMG_20250506_161115](https://github.com/user-attachments/assets/3ce13bce-ffd5-4fc3-8754-cad022660036)
+```toml
+# First package
+[[ballsdex.packages]]
+location = "git+https://github.com/example/other-package.git"
+path = "other"
+enabled = true
 
-Adding screenshot to avoid any confusion
-
-# Step 5 
-Go to `BallsDex-DiscordBot/admin_panel/admin_panel/settings` there open `local.py` and add this line 
-```py
-INSTALLED_APPS.append("craftings")
+# Crafting Package
+[[ballsdex.packages]]
+location = "git+https://github.com/Mitoooooooopo/Crafting-package-BD.git@0.3.1#main"
+path = "crafting"
+enabled = true
 ```
-Then at your base admin_panel folder,
-Run  
 
-```py
-docker compose exec admin-panel python3 manage.py makemigrations craftings
+### 2 — Rebuild and start the bot
+
+```bash
+docker compose build
+docker compose up -d
 ```
-Then 
 
-```py
-docker compose exec admin-panel python3 manage.py migrate craftings
+This will install the package and start the bot.
+
+## Admin Panel Setup
+
+Go to **Crafting → Crafting recipes** and create a recipe.
+
+| Field | Description |
+|---|---|
+| `Result` | The countryball created when the recipe succeeds. |
+| `Ingredients` | Fixed countryballs required by the recipe. |
+| `Quantity` | How many of that ingredient are required. |
+| `Ingredient groups` | Optional groups where players can provide any matching option. |
+| `Required count` | How many balls from that group are required. |
+
+### Ingredient Groups
+
+Ingredient groups let a recipe accept flexible ingredients. For example, a group named `European Countries` with `required_count = 2` can allow the player to use any two configured group options.
+
+After creating a crafting ingredient group, open it in the admin panel and add its group options.
+
+## Admin Panel — Crafting Recipes
+
+Under **Crafting → Crafting recipes** you can see every recipe, including:
+
+- **Result** — countryball created by the recipe
+- **Ingredients** — fixed ingredient requirements
+- **Ingredient groups** — flexible requirement groups
+- **Group options** — countryballs accepted by a group
+
+Recipes and groups are created manually in the admin panel.
+
+## Applying changes without a full restart
+
+After changing commands or installing the package, reload and sync:
+
+```text
+@YourBot reload crafting.package
+@YourBot reloadtree
 ```
-![Screenshot_2025-05-08-15-07-05-36](https://github.com/user-attachments/assets/b78825a4-8076-4c6f-873e-ced65451e7e2)
 
-
-And Your Done 
-> [!IMPORTANT]
-> I see alot of people get issues with the last step cause a lot of issues so if any error regarding the migrations please contact me directly 
+This updates the commands in Discord. Admin panel display changes may require restarting the admin panel container.

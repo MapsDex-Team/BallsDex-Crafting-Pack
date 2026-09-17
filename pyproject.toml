@@ -1,0 +1,18 @@
+[project]
+name = "crafting"
+version = "0.3.1"
+
+description = "Crafting package for BallsDex"
+authors = [
+  { name="Mitoooooooopo" },
+]
+readme = "README.md"
+
+# dependencies = [
+#     "ballsdex>=3.0.0",
+# ]
+
+[project.urls]
+Repository = "https://github.com/Mitoooooooopo/Crafting-package-BD"
+Documentation = "https://github.com/Mitoooooooopo/Crafting-package-BD#readme"
+Issues = "https://github.com/Mitoooooooopo/Crafting-package-BD/issues"
